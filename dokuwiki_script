@@ -1,0 +1,64 @@
+#!/bin/bash
+
+# Define variables
+WEB_ROOT="/var/www/html"
+WIKI_DIR="dokuwiki"
+FULL_PATH="$WEB_ROOT/$WIKI_DIR"
+DOWNLOAD_URL="https://download.dokuwiki.org/src/dokuwiki/dokuwiki-stable.tgz"
+DOWNLOAD_FILE="dokuwiki-stable.tgz"
+
+# Exit immediately if a command exits with a non-zero status
+set -e
+
+# Step 1: Update system packages
+echo "Updating system packages..."
+sudo apt update && sudo apt upgrade -y
+
+# Step 2: Install required packages if they are not already installed
+echo "Installing prerequisites (Apache, PHP, etc.)..."
+sudo apt install -y apache2 libapache2-mod-php php-xml php-gd unzip
+
+
+# Step 3: Download and extract DokuWiki
+echo "Downloading DokuWiki..."
+cd $WEB_ROOT
+sudo wget -O $DOWNLOAD_FILE $DOWNLOAD_URL
+
+echo "Extracting DokuWiki..."
+sudo tar xvf $DOWNLOAD_FILE -C $FULL_PATH --strip-components=1 || sudo mkdir $FULL_PATH && sudo tar xvf $DOWNLOAD_FILE -C $FULL_PATH --strip-components=1
+
+# Step 4: Set correct permissions
+echo "Setting file permissions..."
+sudo chown -R www-data:www-data $FULL_PATH
+sudo chmod -R 755 $FULL_PATH
+
+# Step 5: Create custom wiki pages
+echo "Creating initial wiki pages..."
+PAGES_DIR="$FULL_PATH/data/pages"
+
+# home.txt - Welcome message
+echo "===== Welcome to Your Wiki =====" | sudo tee "$PAGES_DIR/home.txt"
+echo "" | sudo tee -a "$PAGES_DIR/home.txt"
+echo "This is your new DokuWiki installation. Edit this page to get started." | sudo tee -a "$PAGES_DIR/home.txt"
+
+# aws_notes.txt - Short notes about AWS
+echo "===== AWS Notes =====" | sudo tee "$PAGES_DIR/aws_notes.txt"
+echo "" | sudo tee -a "$PAGES_DIR/aws_notes.txt"
+echo "^ Topic ^ Description ^" | sudo tee -a "$PAGES_DIR/aws_notes.txt"
+echo "| **IAM** | Identity and Access Management; for managing user permissions. |" | sudo tee -a "$PAGES_DIR/aws_notes.txt"
+echo "| **EC2** | Elastic Compute Cloud; for resizable compute capacity. |" | sudo tee -a "$PAGES_DIR/aws_notes.txt"
+echo "| **S3** | Simple Storage Service; for object storage. |" | sudo tee -a "$PAGES_DIR/aws_notes.txt"
+
+# linux_commands.txt - Useful CLI commands
+echo "===== Linux Commands =====" | sudo tee "$PAGES_DIR/linux_commands.txt"
+echo "" | sudo tee -a "$PAGES_DIR/linux_commands.txt"
+echo "^ Command ^ Description ^" | sudo tee -a "$PAGES_DIR/linux_commands.txt"
+echo "| `ls -l` | Lists files in long format. |" | sudo tee -a "$PAGES_DIR/linux_commands.txt"
+echo "| `grep -r "pattern"` | Searches for a pattern recursively. |" | sudo tee -a "$PAGES_DIR/linux_commands.txt"
+echo "| `chmod +x script.sh` | Makes a script executable. |" | sudo tee -a "$PAGES_DIR/linux_commands.txt"
+
+echo "Cleanup downloaded tarball..."
+sudo rm $WEB_ROOT/$DOWNLOAD_FILE
+
+echo "DokuWiki installation script complete. Visit http://172.31.26.22/dokuwiki/install.php to finalize setup."
+echo "Don't forget to remove the install.php file after configuration for security."
